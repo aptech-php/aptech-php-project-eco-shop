@@ -16,55 +16,66 @@ use Session;
 class PagesController extends Controller
 {
 
-	function __construct(){
+	function __construct()
+	{
 		$products = ProductModel::all();
-		view()->share('products',$products);
+		view()->share('products', $products);
 		$categories = CategoryModel::orderBy('name_category')->get();
-		view()->share('categories',$categories);
+		view()->share('categories', $categories);
 		$categoriesNews = CategoryNewsModel::all();
-		view()->share('categoriesNews',$categoriesNews);
+		view()->share('categoriesNews', $categoriesNews);
 	}
-    //template
-	function template(){
+	//template
+	function template()
+	{
 
 		return view('front.template.template-front');
 	}
 
 	//home
-	function index(){
+	function index()
+	{
 		$promotionProducts = ProductModel::orderByDesc('percent_discount_product')->take(5)->get();
 		$bestSellerProducts = ProductModel::orderByDesc('name_en_product')->take(5)->get();
 		$comingProducts = ProductModel::orderByDesc('created_at')->take(5)->get();
 
-		return view('front.index-front',['promotionProducts'=>$promotionProducts,'bestSellerProducts'=>$bestSellerProducts,'comingProducts'=>$comingProducts]);
+		return view('front.index-front', [
+			'promotionProducts' => $promotionProducts,
+			'bestSellerProducts' => $bestSellerProducts,
+			'comingProducts' => $comingProducts
+		]);
 	}
 
 	//product detail
-	function productDetail($id){
+	function productDetail($id)
+	{
 		$product = ProductModel::find($id);
-		$similarProducts = ProductModel::where('id_category_in_product',$product->id_category_in_product)->take(3)->get();
+		$similarProducts = ProductModel::where('id_category_in_product', $product->id_category_in_product)->take(3)->get();
 		$bestSellerProducts = ProductModel::orderByDesc('name_en_product')->take(3)->get();
-		return view('front.product-detail',['product'=>$product,'similarProducts'=>$similarProducts,'bestSellerProducts'=>$bestSellerProducts]);
+		return view('front.product-detail', ['product' => $product, 'similarProducts' => $similarProducts, 'bestSellerProducts' => $bestSellerProducts]);
 	}
 
 	//category
-	function category($id){
+	function category($id)
+	{
 		$categoryDetail = CategoryModel::find($id);
-		$productsCategory = ProductModel::where('id_category_in_product',$id)->paginate(3);
-		return view('front.category-front',['categoryDetail'=>$categoryDetail,'productsCategory'=>$productsCategory]);
+		$productsCategory = ProductModel::where('id_category_in_product', $id)->paginate(3);
+		return view('front.category-front', ['categoryDetail' => $categoryDetail, 'productsCategory' => $productsCategory]);
 	}
 
 	//category news
-	function categoryNews($id){
+	function categoryNews($id)
+	{
 		$categoryNews = CategoryNewsModel::find($id);
-		$allNews = NewsModel::where('id_category_in_news',$id)->paginate(3);
-		return view('front.category-news-front',['categoryNews'=>$categoryNews,'allNews'=>$allNews]);
+		$allNews = NewsModel::where('id_category_in_news', $id)->paginate(3);
+		return view('front.category-news-front', ['categoryNews' => $categoryNews, 'allNews' => $allNews]);
 	}
 
 	//news
-	function news($id){
+	function news($id)
+	{
 		$news = NewsModel::find($id);
-		return view('front.news-front',['news'=>$news]);
+		return view('front.news-front', ['news' => $news]);
 	}
 
 	//policy
@@ -72,61 +83,66 @@ class PagesController extends Controller
 	{
 		return view('front.policy');
 	}
-		//about us
+	//about us
 	function about()
 	{
 		return view('front.about');
 	}
-		//contact
+	//contact
 	function contact()
 	{
 		return view('front.contact');
 	}
 
-	function getAddToCart(Request $request,$id){
+	function getAddToCart(Request $request, $id)
+	{
 		$product = ProductModel::find($id);
-		$oldCart = Session('cart')?Session::get('cart'):null;
+		$oldCart = Session('cart') ? Session::get('cart') : null;
 
 		$cart = new Cart($oldCart);
-		$cart->addToCart($product,$id);
-		$request->session()->put('cart',$cart);
+		$cart->addToCart($product, $id);
+		$request->session()->put('cart', $cart);
 		return redirect()->back();
-
 	}
 
-	function getRemoveItem($id){
-		$oldCart = Session::get('cart')?Session::get('cart'):null;
+	function getRemoveItem($id)
+	{
+		$oldCart = Session::get('cart') ? Session::get('cart') : null;
 		$cart = new Cart($oldCart);
 		$cart->removeItem($id);
-		if(count($cart->items)>0){
-			Session::put('cart',$cart);
+		if (count($cart->items) > 0) {
+			Session::put('cart', $cart);
 		} else {
 			Session::forget('cart');
 		}
 		return redirect()->back();
 	}
 
-	function getReduceByOne($id){
-		$oldCart = Session::get('cart')?Session::get('cart'):null;
+	function getReduceByOne($id)
+	{
+		$oldCart = Session::get('cart') ? Session::get('cart') : null;
 		$cart = new Cart($oldCart);
 		$cart->reduceByOne($id);
-		if(count($cart->items)>0){
-			Session::put('cart',$cart);
+		if (count($cart->items) > 0) {
+			Session::put('cart', $cart);
 		} else {
 			Session::forget('cart');
 		}
 		return redirect()->back();
 	}
 
-	function getShoppingCart(){
+	function getShoppingCart()
+	{
 		return view('front.shopping-cart');
 	}
 
-	function getCheckout(){
+	function getCheckout()
+	{
 		return view('front.checkout');
 	}
 
-	function postCheckout(Request $request){
+	function postCheckout(Request $request)
+	{
 		$cart = Session::get('cart');
 
 		$customer = new Customer();
@@ -144,19 +160,16 @@ class PagesController extends Controller
 		$bill->status = 1;
 		$bill->save();
 
-		foreach($cart->items as $key=>$value){
+		foreach ($cart->items as $key => $value) {
 			$billDetail = new BillDetail();
 			$billDetail->id_bill = $bill->id_bill;
 			$billDetail->id_product = $key;
 			$billDetail->quantity = $value['quantity'];
-			$billDetail->unit_price = $value['price']/$value['quantity'];
+			$billDetail->unit_price = $value['price'] / $value['quantity'];
 			$billDetail->save();
 		}
 
 		Session::forget('cart');
-		return redirect()->route('index')->with('announcement','Your order was successfully');
-
+		return redirect()->route('index')->with('announcement', 'Your order was successfully');
 	}
-
 }
-

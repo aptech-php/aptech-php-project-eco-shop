@@ -20,8 +20,8 @@ class CreateNewsTable extends Migration
             $table->foreign('id_user_in_news')->references('id_user')->on('users');
             $table->string('title_vi_news');
             $table->string('title_en_news');
-            $table->string('short_description_news');
-            $table->string('content_news');
+            $table->text('short_description_news');
+            $table->longText('content_news');
             $table->string('image_news');
             $table->timestamps();
         });
